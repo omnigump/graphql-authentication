@@ -230,7 +230,22 @@ class UserService extends Component
                     }
 
                     $user = $this->create($arguments, $settings->userGroup);
-                    $token = $tokenService->create($user, $schemaId);
+
+                    /** @var ProjectConfig */
+                    $projectConfigService = Craft::$app->getProjectConfig();
+                    $requiresVerification = $projectConfigService->get('users.requireEmailVerification');
+
+                    // Don't create token if verification is required
+                    if ($requiresVerification) {
+                        $token = [
+                            'jwt' => null,
+                            'jwtExpiresAt' => 0,
+                            'refreshToken' => null,
+                            'refreshTokenExpiresAt' => 0,
+                        ];
+                    } else {
+                        $token = $tokenService->create($user, $schemaId);
+                    }
 
                     return $this->getResponseFields($user, $schemaId, $token);
                 },
